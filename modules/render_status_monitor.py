@@ -1,3 +1,5 @@
+# 🔁 Updated for Render deploy – removed win10toast (v9.3.2 sync)
+
 # ===========================================================
 # EURO_GOALS Render Status Monitor (Render-compatible version)
 # ===========================================================
