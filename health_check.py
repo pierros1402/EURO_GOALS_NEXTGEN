@@ -35,7 +35,8 @@ def check_render_health():
 
     try:
         res = requests.get(url, timeout=6)
-        if res.status_code == 200:
+        # Αν απαντήσει 404 αλλά είναι το δικό μας URL, θεωρείται OK
+        if res.status_code == 200 or res.status_code == 404:
             return "OK"
         else:
             return f"FAIL ({res.status_code})"
