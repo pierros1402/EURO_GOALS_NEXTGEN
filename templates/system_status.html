@@ -1,72 +1,128 @@
-<!-- ======================================================
-     EURO_GOALS v9.2.1 – System Status Panel
-     Προστέθηκε GoalMatrix Engine status
-     ====================================================== -->
-
 <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Status – EURO_GOALS v9.2.1</title>
-    <link rel="stylesheet" href="/static/styles.css">
-</head>
+    <title>EURO_GOALS v9.3 – Unified Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
 
+    <style>
+        /* ===============================
+           Inline fallback (αν δεν φορτώσει το style.css)
+        =============================== */
+        body {
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #161b22;
+            border-bottom: 2px solid #30363d;
+            padding: 25px 10px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #58a6ff;
+            margin: 0;
+        }
+
+        main {
+            padding: 25px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .status-card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 0 8px rgba(0,0,0,0.3);
+        }
+
+        .ok {
+            color: #3fb950;
+            font-weight: bold;
+        }
+
+        .fail {
+            color: #f85149;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: #d29922;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .refreshing {
+            opacity: 0.5;
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
 <body>
     <header>
-        <h1>⚙️ EURO_GOALS v9.2.1 – System Status Panel</h1>
-        <p>Παρακολούθηση όλων των κύριων υπηρεσιών & δεδομένων</p>
+        <h1>⚙️ EURO_GOALS v9.3 – Unified Monitor</h1>
+        <p>Real-time monitoring for System Status, SmartMoney & GoalMatrix</p>
     </header>
 
     <main>
-        <div class="status-grid">
-            <div class="status-card">Database<br><span id="db">--</span></div>
-            <div class="status-card">Render Health<br><span id="render">--</span></div>
-            <div class="status-card">FootballData API<br><span id="footballdata">--</span></div>
-            <div class="status-card">SportMonks API<br><span id="sportmonks">--</span></div>
-            <div class="status-card">BeSoccer API<br><span id="besoccer">--</span></div>
-            <div class="status-card">Smart Money Monitor<br><span id="smartmoney">--</span></div>
-            <div class="status-card">GoalMatrix Engine<br><span id="goalmatrix">--</span></div>
-        </div>
-
-        <div class="timestamp">Τελευταία ενημέρωση: <span id="last_update">--</span></div>
-
-        <div style="text-align:center; margin-top:20px;">
-            <a class="button" href="/">🔙 Επιστροφή στην αρχική</a>
-            <button class="link" onclick="manualRefresh()">🔄 Χειροκίνητη ανανέωση</button>
-        </div>
+        <h2>System Status</h2>
+        <div id="statusGrid" class="status-grid"></div>
+        <footer>
+            <p id="lastUpdate">Τελευταία ενημέρωση: —</p>
+        </footer>
     </main>
 
-    <div id="loader"></div>
-
     <script>
-        async function refreshStatus() {
+        async function loadStatus() {
+            const grid = document.getElementById('statusGrid');
+            const footer = document.getElementById('lastUpdate');
+            grid.classList.add('refreshing');
             try {
-                document.body.classList.add("loading");
-                const res = await fetch("/system_status_data");
+                const res = await fetch('/system_status_data');
                 const data = await res.json();
-                document.getElementById("db").innerHTML = data.db;
-                document.getElementById("render").innerHTML = data.render;
-                document.getElementById("footballdata").innerHTML = data.footballdata;
-                document.getElementById("sportmonks").innerHTML = data.sportmonks;
-                document.getElementById("besoccer").innerHTML = data.besoccer;
-                document.getElementById("smartmoney").innerHTML = data.smartmoney;
-                document.getElementById("goalmatrix").innerHTML = data.goalmatrix;
-                document.getElementById("last_update").innerHTML = data.last_update;
+
+                grid.innerHTML = '';
+                for (const [key, value] of Object.entries(data)) {
+                    if (key === 'last_update') continue;
+                    const div = document.createElement('div');
+                    div.className = 'status-card';
+                    let cls = 'pending';
+                    if (value.includes('OK')) cls = 'ok';
+                    else if (value.includes('FAIL')) cls = 'fail';
+                    div.innerHTML = `<h3>${key}</h3><p class="${cls}">${value}</p>`;
+                    grid.appendChild(div);
+                }
+
+                footer.innerText = `Τελευταία ενημέρωση: ${data.last_update}`;
             } catch (err) {
-                console.error("[STATUS ERROR]", err);
+                console.error('[STATUS] Error loading:', err);
+                grid.innerHTML = '<p class="fail">⚠️ Σφάλμα φόρτωσης δεδομένων</p>';
             } finally {
-                document.body.classList.remove("loading");
+                grid.classList.remove('refreshing');
             }
         }
-        function manualRefresh() { refreshStatus(); }
-        setInterval(refreshStatus, 30000);
-        window.onload = refreshStatus;
-    </script>
 
-    <footer>
-        EURO_GOALS v9.2.1 © 2025 | System Status & Dual Engine Monitor
-    </footer>
+        // Φόρτωση αρχικά και κάθε 30''
+        loadStatus();
+        setInterval(loadStatus, 30000);
+    </script>
 </body>
-<!-- redeploy -->
 </html>
