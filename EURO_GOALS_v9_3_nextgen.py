@@ -147,3 +147,11 @@ def goalmatrix_data():
 @app.on_event("startup")
 def startup_event():
     print("[EURO_GOALS v9.3] 🚀 Unified Monitoring initialized.")
+
+# --------------------------------------------------------------
+# LOCAL EXECUTION (optional)
+# --------------------------------------------------------------
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("EURO_GOALS_v9_3_nextgen:app", host="0.0.0.0", port=8000, reload=True)
+
