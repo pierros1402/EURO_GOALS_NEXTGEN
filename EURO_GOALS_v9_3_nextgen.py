@@ -26,10 +26,12 @@ GOALMATRIX_SOURCES = os.getenv("GOALMATRIX_SOURCES", "SOFASCORE,FLASHCORE,BESOCC
 GOALMATRIX_ALERT_THRESHOLD = os.getenv("GOALMATRIX_ALERT_THRESHOLD", "0.82")
 
 # --------------------------------------------------------------
-# FASTAPI INIT
+# FASTAPI INIT + TEMPLATE PATH FIX (Render compatible)
 # --------------------------------------------------------------
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 engine = create_engine(
     DATABASE_URL,
@@ -144,6 +146,9 @@ def goalmatrix_data():
     }
     return JSONResponse(content=data)
 
+# --------------------------------------------------------------
+# STARTUP EVENT
+# --------------------------------------------------------------
 @app.on_event("startup")
 def startup_event():
     print("[EURO_GOALS v9.3] 🚀 Unified Monitoring initialized.")
@@ -154,4 +159,3 @@ def startup_event():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("EURO_GOALS_v9_3_nextgen:app", host="0.0.0.0", port=8000, reload=True)
-
