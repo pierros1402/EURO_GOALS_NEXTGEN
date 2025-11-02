@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: EURO_GOALS_NEXTGEN
+    env: python
+    buildCommand: ""
+    startCommand: uvicorn EURO_GOALS_v9_3_nextgen:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+    staticPublishPath: static
+    autoDeploy: true
