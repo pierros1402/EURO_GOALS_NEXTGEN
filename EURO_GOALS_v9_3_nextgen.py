@@ -6,6 +6,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, text
 from datetime import datetime
 import requests
@@ -26,12 +27,16 @@ GOALMATRIX_SOURCES = os.getenv("GOALMATRIX_SOURCES", "SOFASCORE,FLASHCORE,BESOCC
 GOALMATRIX_ALERT_THRESHOLD = os.getenv("GOALMATRIX_ALERT_THRESHOLD", "0.82")
 
 # --------------------------------------------------------------
-# FASTAPI INIT + TEMPLATE PATH FIX (Render compatible)
+# FASTAPI INIT + TEMPLATE / STATIC PATH FIX (Render compatible)
 # --------------------------------------------------------------
 app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+templates = Jinja2Templates(directory=TEMPLATE_DIR)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 engine = create_engine(
     DATABASE_URL,
@@ -109,6 +114,7 @@ def home(request: Request):
 
 @app.get("/unified_monitor", response_class=HTMLResponse)
 def unified_monitor_page(request: Request):
+    print("[ROUTE] /unified_monitor called")  # debugging print
     return templates.TemplateResponse("unified_monitor.html", {"request": request})
 
 @app.get("/system_status_data")
