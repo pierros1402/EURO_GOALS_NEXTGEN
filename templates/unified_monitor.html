@@ -1,125 +1,147 @@
-<!-- ==========================================================
-     EURO_GOALS v9.3 – Unified Monitoring Panel
-     Tabs: System | SmartMoney | GoalMatrix
-     ========================================================== -->
-
 <!DOCTYPE html>
-<html lang="el">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified Monitor – EURO_GOALS v9.3</title>
+    <title>EURO_GOALS v9.3 – Unified Monitor</title>
+
+    <!-- ✅ Correct CSS path -->
     <link rel="stylesheet" href="/static/style.css">
+
+    <!-- ✅ Inline fallback style (if static/style.css not found) -->
+    <style>
+        body {
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            text-align: center;
+            padding: 20px;
+            background-color: #161b22;
+            border-bottom: 2px solid #30363d;
+        }
+        header h1 {
+            margin: 0;
+            color: #58a6ff;
+        }
+        .panel {
+            width: 90%;
+            margin: 20px auto;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        h2 {
+            color: #58a6ff;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #30363d;
+        }
+        tr:hover {
+            background-color: #1f242d;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            margin-top: 30px;
+            color: #8b949e;
+        }
+    </style>
 </head>
-
 <body>
-<header>
-    <h1>🧭 EURO_GOALS v9.3 – Unified Monitoring Panel</h1>
-    <p>Ενοποιημένη εποπτεία συστημάτων, αγορών και δεδομένων</p>
-</header>
+    <header>
+        <h1>⚙️ EURO_GOALS v9.3 – Unified Monitor</h1>
+        <p>Real-time monitoring for System Status, SmartMoney & GoalMatrix</p>
+    </header>
 
-<main>
-    <!-- Tab Navigation -->
-    <div class="tabs">
-        <button class="tab-button active" onclick="openTab('system')">🖥️ System Status</button>
-        <button class="tab-button" onclick="openTab('smartmoney')">💰 Smart Money</button>
-        <button class="tab-button" onclick="openTab('goalmatrix')">🎯 GoalMatrix</button>
+    <!-- System Status Panel -->
+    <div class="panel">
+        <h2>System Status</h2>
+        <table id="systemStatus">
+            <tr><th>Component</th><th>Status</th></tr>
+            <tr><td>Database</td><td id="db">⏳ Loading...</td></tr>
+            <tr><td>Render</td><td id="render">⏳ Loading...</td></tr>
+            <tr><td>FootballData API</td><td id="footballdata">⏳ Loading...</td></tr>
+            <tr><td>SportMonks API</td><td id="sportmonks">⏳ Loading...</td></tr>
+            <tr><td>BeSoccer API</td><td id="besoccer">⏳ Loading...</td></tr>
+            <tr><td>SmartMoney Engine</td><td id="smartmoney">⏳ Loading...</td></tr>
+            <tr><td>GoalMatrix Engine</td><td id="goalmatrix">⏳ Loading...</td></tr>
+            <tr><td>Last Update</td><td id="last_update">--:--:--</td></tr>
+        </table>
     </div>
 
-    <!-- SYSTEM TAB -->
-    <div id="system" class="tab-content active">
-        <div class="status-grid">
-            <div class="status-card">Database<br><span id="db">--</span></div>
-            <div class="status-card">Render<br><span id="render">--</span></div>
-            <div class="status-card">FootballData<br><span id="footballdata">--</span></div>
-            <div class="status-card">SportMonks<br><span id="sportmonks">--</span></div>
-            <div class="status-card">BeSoccer<br><span id="besoccer">--</span></div>
-        </div>
-        <div class="timestamp">Last update: <span id="system_time">--</span></div>
+    <!-- SmartMoney Panel -->
+    <div class="panel">
+        <h2>SmartMoney Overview</h2>
+        <table id="smartmoneyTable">
+            <tr><th>Source</th><th>Status</th></tr>
+            <tr><td>Pinnacle</td><td id="pinnacle">⏳</td></tr>
+            <tr><td>SBOBET</td><td id="sbobet">⏳</td></tr>
+            <tr><td>188BET</td><td id="b188">⏳</td></tr>
+            <tr><td>Last Refresh</td><td id="smart_refresh">--:--</td></tr>
+        </table>
     </div>
 
-    <!-- SMARTMONEY TAB -->
-    <div id="smartmoney" class="tab-content">
-        <div class="status-grid">
-            <div class="status-card">Pinnacle<br><span id="pinnacle">--</span></div>
-            <div class="status-card">SBOBET<br><span id="sbobet">--</span></div>
-            <div class="status-card">188BET<br><span id="bet188">--</span></div>
-        </div>
-        <div class="timestamp">Last refresh: <span id="smartmoney_time">--</span></div>
+    <!-- GoalMatrix Panel -->
+    <div class="panel">
+        <h2>GoalMatrix Sources</h2>
+        <table id="goalMatrix">
+            <tr><th>Provider</th><th>Status</th></tr>
+        </table>
+        <p><b>Alert Threshold:</b> <span id="threshold">--</span></p>
+        <p><b>Last Update:</b> <span id="goal_update">--:--</span></p>
     </div>
 
-    <!-- GOALMATRIX TAB -->
-    <div id="goalmatrix" class="tab-content">
-        <div class="status-grid">
-            <div class="status-card">SOFASCORE<br><span id="sofascore">--</span></div>
-            <div class="status-card">FLASHCORE<br><span id="flashcore">--</span></div>
-            <div class="status-card">BESOCCER<br><span id="besoccer_gm">--</span></div>
-        </div>
-        <div class="timestamp">Last update: <span id="gm_time">--</span></div>
-    </div>
+    <footer>
+        EURO_GOALS NextGen v9.3 | Monitoring powered by FastAPI
+    </footer>
 
-    <div id="loader"></div>
-</main>
+    <script>
+        async function fetchData() {
+            try {
+                const sys = await fetch("/system_status_data").then(r => r.json());
+                document.getElementById("db").innerText = sys.db;
+                document.getElementById("render").innerText = sys.render;
+                document.getElementById("footballdata").innerText = sys.footballdata;
+                document.getElementById("sportmonks").innerText = sys.sportmonks;
+                document.getElementById("besoccer").innerText = sys.besoccer;
+                document.getElementById("smartmoney").innerText = sys.smartmoney;
+                document.getElementById("goalmatrix").innerText = sys.goalmatrix;
+                document.getElementById("last_update").innerText = sys.last_update;
 
-<footer>
-    EURO_GOALS v9.3 © 2025 | Unified Monitoring Module
-</footer>
+                const sm = await fetch("/smartmoney_data").then(r => r.json());
+                document.getElementById("pinnacle").innerText = sm.pinnacle;
+                document.getElementById("sbobet").innerText = sm.sbobet;
+                document.getElementById("b188").innerText = sm["188bet"];
+                document.getElementById("smart_refresh").innerText = sm.last_refresh;
 
-<script>
-    // Tabs
-    function openTab(tabId) {
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelector(`.tab-button[onclick*="${tabId}"]`).classList.add('active');
-        document.getElementById(tabId).classList.add('active');
-    }
-
-    // Refresh System
-    async function refreshSystem() {
-        document.body.classList.add("loading");
-        const r = await fetch("/system_status_data");
-        const d = await r.json();
-        ["db","render","footballdata","sportmonks","besoccer"].forEach(k=>{
-            document.getElementById(k).innerHTML = colorize(d[k]);
-        });
-        document.getElementById("system_time").innerHTML = d.last_update;
-        document.body.classList.remove("loading");
-    }
-
-    // Refresh SmartMoney
-    async function refreshSmart() {
-        const r = await fetch("/smartmoney_data");
-        const d = await r.json();
-        document.getElementById("pinnacle").innerHTML = colorize(d.pinnacle);
-        document.getElementById("sbobet").innerHTML = colorize(d.sbobet);
-        document.getElementById("bet188").innerHTML = colorize(d["188bet"]);
-        document.getElementById("smartmoney_time").innerHTML = d.last_refresh;
-    }
-
-    // Refresh GoalMatrix
-    async function refreshGoalMatrix() {
-        const r = await fetch("/goalmatrix_data");
-        const d = await r.json();
-        document.getElementById("sofascore").innerHTML = colorize(d.sources.SOFASCORE);
-        document.getElementById("flashcore").innerHTML = colorize(d.sources.FLASHCORE);
-        document.getElementById("besoccer_gm").innerHTML = colorize(d.sources.BESOCCER);
-        document.getElementById("gm_time").innerHTML = d.last_update;
-    }
-
-    // Auto refresh intervals
-    setInterval(refreshSystem, 30000);
-    setInterval(refreshSmart, 60000);
-    setInterval(refreshGoalMatrix, 45000);
-    window.onload = () => { refreshSystem(); refreshSmart(); refreshGoalMatrix(); }
-
-    // Colorize
-    function colorize(txt) {
-        if (txt.includes("✅")) return `<span style='color:#3fb950;font-weight:bold;'>${txt}</span>`;
-        if (txt.includes("⚠️")) return `<span style='color:#d29922;font-weight:bold;'>${txt}</span>`;
-        if (txt.includes("❌")) return `<span style='color:#f85149;font-weight:bold;'>${txt}</span>`;
-        return txt;
-    }
-</script>
+                const gm = await fetch("/goalmatrix_data").then(r => r.json());
+                const tbl = document.getElementById("goalMatrix");
+                tbl.innerHTML = "<tr><th>Provider</th><th>Status</th></tr>";
+                for (const [src, val] of Object.entries(gm.sources)) {
+                    tbl.innerHTML += `<tr><td>${src}</td><td>${val}</td></tr>`;
+                }
+                document.getElementById("threshold").innerText = gm.threshold;
+                document.getElementById("goal_update").innerText = gm.last_update;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        setInterval(fetchData, 5000);
+        fetchData();
+    </script>
 </body>
-<!-- redeploy -->)
 </html>
