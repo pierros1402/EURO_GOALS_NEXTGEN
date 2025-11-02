@@ -1,6 +1,7 @@
 # ==============================================================
-# EURO_GOALS v9.3 – Unified Monitoring Backend
+# EURO_GOALS v9.3 – Unified Monitoring Backend (Final)
 # Combines System Status + SmartMoney + GoalMatrix Panels
+# Includes /health endpoint for Render diagnostics
 # ==============================================================
 
 from fastapi import FastAPI, Request
@@ -54,6 +55,7 @@ def check_database():
     except Exception:
         return "❌ Offline"
 
+
 def check_render():
     if not RENDER_HEALTH_URL:
         return "⚠️ URL Missing"
@@ -63,37 +65,50 @@ def check_render():
     except Exception:
         return "❌ Offline"
 
+
 def check_footballdata():
     if not FOOTBALLDATA_API_KEY:
         return "⚠️ Missing key"
     try:
-        r = requests.get("https://api.football-data.org/v4/competitions",
-                         headers={"X-Auth-Token": FOOTBALLDATA_API_KEY},
-                         timeout=5)
+        r = requests.get(
+            "https://api.football-data.org/v4/competitions",
+            headers={"X-Auth-Token": FOOTBALLDATA_API_KEY},
+            timeout=5
+        )
         return "✅ OK" if r.status_code == 200 else f"❌ {r.status_code}"
     except Exception:
         return "❌ Offline"
+
 
 def check_sportmonks():
     if not SPORTMONKS_API_KEY:
         return "⚠️ Missing key"
     try:
-        r = requests.get(f"https://api.sportmonks.com/v3/core/countries?api_token={SPORTMONKS_API_KEY}", timeout=5)
+        r = requests.get(
+            f"https://api.sportmonks.com/v3/core/countries?api_token={SPORTMONKS_API_KEY}",
+            timeout=5
+        )
         return "✅ OK" if r.status_code == 200 else f"❌ {r.status_code}"
     except Exception:
         return "❌ Offline"
+
 
 def check_besoccer():
     if not BESOCCER_API_KEY:
         return "⚠️ Missing key"
     try:
-        r = requests.get(f"https://apiv3.apifootball.com/?action=get_leagues&APIkey={BESOCCER_API_KEY}", timeout=5)
+        r = requests.get(
+            f"https://apiv3.apifootball.com/?action=get_leagues&APIkey={BESOCCER_API_KEY}",
+            timeout=5
+        )
         return "✅ OK" if r.status_code == 200 else f"❌ {r.status_code}"
     except Exception:
         return "❌ Offline"
 
+
 def check_smartmoney():
     return "✅ Active"
+
 
 def check_goalmatrix_sources():
     results = {}
@@ -112,10 +127,12 @@ def check_goalmatrix_sources():
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @app.get("/unified_monitor", response_class=HTMLResponse)
 def unified_monitor_page(request: Request):
-    print("[ROUTE] /unified_monitor called")  # debugging print
+    print("[ROUTE] /unified_monitor called")
     return templates.TemplateResponse("unified_monitor.html", {"request": request})
+
 
 @app.get("/system_status_data")
 def system_status_data():
@@ -132,6 +149,7 @@ def system_status_data():
     }
     return JSONResponse(content=data)
 
+
 @app.get("/smartmoney_data")
 def smartmoney_data():
     data = {
@@ -143,6 +161,7 @@ def smartmoney_data():
     }
     return JSONResponse(content=data)
 
+
 @app.get("/goalmatrix_data")
 def goalmatrix_data():
     data = {
@@ -151,6 +170,19 @@ def goalmatrix_data():
         "last_update": datetime.now().strftime("%H:%M:%S")
     }
     return JSONResponse(content=data)
+
+# --------------------------------------------------------------
+# HEALTH ENDPOINT (for Render / Unified Monitor)
+# --------------------------------------------------------------
+from health_check import run_full_healthcheck
+
+@app.get("/health")
+def health_status():
+    try:
+        report = run_full_healthcheck()
+        return JSONResponse(content=report)
+    except Exception as e:
+        return JSONResponse(content={"status": "FAIL", "error": str(e)}, status_code=500)
 
 # --------------------------------------------------------------
 # STARTUP EVENT
