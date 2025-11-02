@@ -14,7 +14,7 @@ import json
 from dotenv import load_dotenv
 from health_check import run_full_healthcheck
 from modules.smartmoney_detector import detect_smart_money
-from render_monitor import get_render_status
+from render_status_monitor import get_render_status
 
 # ------------------------------------------------------------
 # Load environment variables
