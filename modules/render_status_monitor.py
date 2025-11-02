@@ -1,96 +1,77 @@
-# 🔁 Updated for Render deploy – removed win10toast (v9.3.2 sync)
-
-# ===========================================================
-# EURO_GOALS Render Status Monitor (Render-compatible version)
-# ===========================================================
+# ===============================================================
+# EURO_GOALS – Render Status Monitor (Render-compatible version)
+# ===============================================================
+# Παρακολουθεί το Render service, την κατάσταση του API και τη βάση
+# Δουλεύει σε server περιβάλλον (χωρίς win10toast / desktop alerts)
+# ===============================================================
 
 import os
 import requests
-import time
 from datetime import datetime
 from dotenv import load_dotenv
 
-# -----------------------------------------------------------
-# Load environment variables
-# -----------------------------------------------------------
+# ---------------------------------------------------------------
+# Φόρτωση μεταβλητών περιβάλλοντος
+# ---------------------------------------------------------------
 load_dotenv()
 
-API_KEY = os.getenv("RENDER_API_KEY")
-SERVICE_ID = os.getenv("RENDER_SERVICE_ID")
-HEALTH_URL = os.getenv("RENDER_HEALTH_URL")
+RENDER_API_KEY = os.getenv("RENDER_API_KEY")
+RENDER_SERVICE_ID = os.getenv("RENDER_SERVICE_ID")
+RENDER_HEALTH_URL = os.getenv("RENDER_HEALTH_URL")
 
-# -----------------------------------------------------------
-# Logging
-# -----------------------------------------------------------
-LOG_DIR = "logs"
-LOG_FILE = os.path.join(LOG_DIR, "render_monitor_log.txt")
+# ---------------------------------------------------------------
+# Έλεγχος κατάστασης Render service
+# ---------------------------------------------------------------
+def get_render_status():
+    """
+    Ελέγχει την υγεία και το status του Render service.
+    Επιστρέφει dictionary με τα αποτελέσματα.
+    """
+    status = {
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "render_api": "FAIL",
+        "service_health": "FAIL",
+        "summary": "❌ Προβλήματα επικοινωνίας με το Render."
+    }
 
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
-
-def log_message(message: str):
-    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"{timestamp} {message}\n")
-    print(f"{timestamp} {message}")
-
-# -----------------------------------------------------------
-# Health check
-# -----------------------------------------------------------
-def check_render_health():
-    if not HEALTH_URL:
-        log_message("❌ No HEALTH_URL defined in .env")
-        return None, None
     try:
-        res = requests.get(HEALTH_URL, timeout=10)
-        return res.status_code, res.text.strip()
-    except Exception as e:
-        log_message(f"⚠️ Connection error: {e}")
-        return None, None
+        # Έλεγχος Render health URL
+        if RENDER_HEALTH_URL:
+            res = requests.get(RENDER_HEALTH_URL, timeout=6)
+            if res.status_code == 200:
+                status["service_health"] = "OK"
+            else:
+                status["service_health"] = f"HTTP {res.status_code}"
 
-# -----------------------------------------------------------
-# Restart service
-# -----------------------------------------------------------
-def restart_render_service():
-    try:
-        url = f"https://api.render.com/v1/services/{SERVICE_ID}/deploys"
-        headers = {
-            "Accept": "application/json",
-            "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json"
-        }
-        data = {"clearCache": True}
-        r = requests.post(url, headers=headers, json=data)
+        # Έλεγχος Render API
+        if RENDER_API_KEY and RENDER_SERVICE_ID:
+            api_url = f"https://api.render.com/v1/services/{RENDER_SERVICE_ID}"
+            headers = {"Authorization": f"Bearer {RENDER_API_KEY}"}
+            res_api = requests.get(api_url, headers=headers, timeout=6)
+            if res_api.status_code == 200:
+                status["render_api"] = "OK"
+            else:
+                status["render_api"] = f"HTTP {res_api.status_code}"
 
-        if r.status_code in [200, 201]:
-            log_message("🔄 Restart triggered successfully.")
+        # Τελική σύνοψη
+        if status["render_api"] == "OK" and status["service_health"] == "OK":
+            status["summary"] = "✅ Όλα λειτουργούν κανονικά στο Render."
+        elif "HTTP" in status["service_health"]:
+            status["summary"] = "⚠️ Το Render service απαντά αλλά όχι κανονικά."
         else:
-            log_message(f"⚠️ Restart failed ({r.status_code}): {r.text}")
+            status["summary"] = "❌ Αποτυχία επικοινωνίας με Render."
+
     except Exception as e:
-        log_message(f"❌ Error triggering restart: {e}")
+        status["summary"] = f"⚠️ Σφάλμα κατά τον έλεγχο: {e}"
 
-# -----------------------------------------------------------
-# Helper for main app
-# -----------------------------------------------------------
-def get_render_status(url=None):
-    """Επιστρέφει '🟢 Active' ή '🔴 Down' για το /system_summary"""
-    test_url = url or HEALTH_URL
-    if not test_url:
-        return "⚪ Unknown"
-    try:
-        r = requests.get(test_url, timeout=5)
-        return "🟢 Active" if r.status_code == 200 else f"🔴 {r.status_code}"
-    except Exception:
-        return "🔴 Down"
+    return status
 
-# -----------------------------------------------------------
+
+# ---------------------------------------------------------------
+# Εκτέλεση αυτόνομη (αν τρέχει ως script)
+# ---------------------------------------------------------------
 if __name__ == "__main__":
-    log_message("🟢 Render Status Monitor started")
-    while True:
-        status, content = check_render_health()
-        if status == 200:
-            log_message("✅ Service healthy")
-        else:
-            log_message(f"⚠️ Service status {status} - restarting")
-            restart_render_service()
-        time.sleep(900)
+    print("[EURO_GOALS] 🔍 Render Monitor Check Running...")
+    result = get_render_status()
+    for k, v in result.items():
+        print(f"{k}: {v}")
