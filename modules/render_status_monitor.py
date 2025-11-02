@@ -1,19 +1,15 @@
 # ===========================================================
-# EURO_GOALS Render Status Monitor (Cross-Platform Version)
-# ===========================================================
-# Ελέγχει την κατάσταση του Render service EURO_GOALS
-# μέσω του Render API και της HEALTH URL.
-# Καταγράφει αποτελέσματα σε logs/render_monitor_log.txt
-# Χωρίς win10toast για πλήρη συμβατότητα Linux (Render)
+# EURO_GOALS Render Status Monitor (Render-compatible version)
 # ===========================================================
 
 import os
 import requests
+import time
 from datetime import datetime
 from dotenv import load_dotenv
 
 # -----------------------------------------------------------
-# 1. Φόρτωση .env μεταβλητών
+# Load environment variables
 # -----------------------------------------------------------
 load_dotenv()
 
@@ -22,7 +18,7 @@ SERVICE_ID = os.getenv("RENDER_SERVICE_ID")
 HEALTH_URL = os.getenv("RENDER_HEALTH_URL")
 
 # -----------------------------------------------------------
-# 2. Ρυθμίσεις / Δομή φακέλων logs
+# Logging
 # -----------------------------------------------------------
 LOG_DIR = "logs"
 LOG_FILE = os.path.join(LOG_DIR, "render_monitor_log.txt")
@@ -31,35 +27,29 @@ if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
 def log_message(message: str):
-    """Αποθηκεύει μήνυμα με timestamp στο log αρχείο"""
     timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"{timestamp} {message}\n")
     print(f"{timestamp} {message}")
 
 # -----------------------------------------------------------
-# 3. Ενημέρωση κατάστασης Render Health
+# Health check
 # -----------------------------------------------------------
-def get_render_status(health_url=None):
-    """Επιστρέφει σύντομη περιγραφή κατάστασης Render"""
-    url = health_url or HEALTH_URL
-    if not url:
-        return "UNKNOWN"
+def check_render_health():
+    if not HEALTH_URL:
+        log_message("❌ No HEALTH_URL defined in .env")
+        return None, None
     try:
-        res = requests.get(url, timeout=5)
-        if res.status_code == 200:
-            return "🟢 Active"
-        else:
-            return f"🔴 Fail ({res.status_code})"
+        res = requests.get(HEALTH_URL, timeout=10)
+        return res.status_code, res.text.strip()
     except Exception as e:
-        log_message(f"[Render Monitor] Error: {e}")
-        return "⚫ Unavailable"
+        log_message(f"⚠️ Connection error: {e}")
+        return None, None
 
 # -----------------------------------------------------------
-# 4. Επανεκκίνηση υπηρεσίας (αν χρειάζεται)
+# Restart service
 # -----------------------------------------------------------
 def restart_render_service():
-    """Trigger νέου deploy μέσω Render API"""
     try:
         url = f"https://api.render.com/v1/services/{SERVICE_ID}/deploys"
         headers = {
@@ -69,15 +59,36 @@ def restart_render_service():
         }
         data = {"clearCache": True}
         r = requests.post(url, headers=headers, json=data)
+
         if r.status_code in [200, 201]:
             log_message("🔄 Restart triggered successfully.")
-        elif r.status_code == 401:
-            log_message("⚠️ Restart failed: Unauthorized (401).")
         else:
             log_message(f"⚠️ Restart failed ({r.status_code}): {r.text}")
     except Exception as e:
         log_message(f"❌ Error triggering restart: {e}")
 
 # -----------------------------------------------------------
-# Τέλος
+# Helper for main app
 # -----------------------------------------------------------
+def get_render_status(url=None):
+    """Επιστρέφει '🟢 Active' ή '🔴 Down' για το /system_summary"""
+    test_url = url or HEALTH_URL
+    if not test_url:
+        return "⚪ Unknown"
+    try:
+        r = requests.get(test_url, timeout=5)
+        return "🟢 Active" if r.status_code == 200 else f"🔴 {r.status_code}"
+    except Exception:
+        return "🔴 Down"
+
+# -----------------------------------------------------------
+if __name__ == "__main__":
+    log_message("🟢 Render Status Monitor started")
+    while True:
+        status, content = check_render_health()
+        if status == 200:
+            log_message("✅ Service healthy")
+        else:
+            log_message(f"⚠️ Service status {status} - restarting")
+            restart_render_service()
+        time.sleep(900)
